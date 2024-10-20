@@ -1,0 +1,96 @@
+
+/* General Reset */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+/* Body styling with a purple background */
+body {
+    background-color: #6a0dad; /* Purple background */
+    color: #fff; /* White text for contrast */
+    font-family: 'Arial', sans-serif;
+}
+
+/* Container for the whole scheduler */
+.container {
+    max-width: 800px;
+    margin: 50px auto;
+    padding: 20px;
+    background-color: #fff; /* White background for the content area */
+    border-radius: 8px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    color: #333; /* Dark text inside the white container */
+}
+
+/* Headings */
+h1, h2 {
+    text-align: center;
+    color: #fff; /* White text on the purple background */
+}
+
+/* Form section styling */
+.form-section, .schedule-section, .embed-section {
+    margin: 20px 0;
+}
+
+input[type="text"], input[type="time"], input[type="file"], textarea {
+    width: calc(100% - 20px);
+    padding: 10px;
+    margin-bottom: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background-color: #9b59b6; /* Lighter purple button */
+    color: white;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #8e44ad; /* Darker purple on hover */
+}
+
+/* Schedule section */
+.schedule-section ul {
+    list-style-type: none;
+}
+
+.schedule-section li {
+    background-color: #ecf0f1;
+    padding: 10px;
+    margin-bottom: 5px;
+    border-left: 5px solid #9b59b6; /* Purple border for each item */
+    border-radius: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.schedule-section li span {
+    font-weight: bold;
+    color: #2c3e50;
+}
+
+/* Embed section */
+.embed-section textarea {
+    width: 100%;
+    height: 80px;
+    padding: 10px;
+    margin-top: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #2c3e50;
+    background-color: #f9f9f9;
+}
