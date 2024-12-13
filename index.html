@@ -1,142 +1,59 @@
-﻿<!DOCTYPE html>
+
+HTML (index.html)
+
+<!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Radio Management Dashboard</title>
-    <link rel="stylesheet" href="css/styles.css">
-    <script src="js/script.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Google Drive Music Player with Scheduler & Icecast</title>
+  <link rel="stylesheet" href="styles.css">
 </head>
-
 <body>
+  <div class="container">
     <header>
-        <h1>Radio Management Dashboard</h1>
-        <nav>
-            <ul>
-                <li><a href="#dashboard">Dashboard</a></li>
-                <li><a href="#media-library">Media Library</a></li>
-                <li><a href="#schedule">Schedule</a></li>
-                <li><a href="#analytics">Analytics</a></li>
-                <li><a href="#music-player">Music Player</a></li>
-                <li><a href="#stream-settings">Stream Settings</a></li>
-            </ul>
-        </nav>
+      <h1>Music Scheduler & Icecast Streamer</h1>
+      <p>Stream your Google Drive-hosted songs live with Icecast!</p>
     </header>
+
     <main>
-        <section id="media-library" class="section">
-            <h2>Media Library</h2>
-            <form id="upload-form" aria-labelledby="media-library">
-                <label for="file-upload">Upload Track:</label>
-                <input type="file" id="file-upload" accept="audio/*" required>
-                <button type="submit" class="btn">Upload</button>
-            </form>
-            <form id="link-form" aria-labelledby="media-library">
-                <label for="google-drive-link">Add Google Drive File Link:</label>
-                <input type="url" id="google-drive-link" placeholder="Enter Google Drive audio file link" required>
-                <button type="submit" class="btn">Add Link</button>
-            </form>
-            <div id="link-message" class="link-message"></div>
-        </section>
-        <section id="schedule" class="section">
-            <h2>Schedule</h2>
-            <form id="schedule-form" aria-labelledby="schedule">
-                <label for="track">Track:</label>
-                <select id="track" required>
-                    <option value="" disabled selected>Select a track</option>
-                    <option value="Track 1">Track 1</option>
-                    <option value="Track 2">Track 2</option>
-                </select>
-                <label for="schedule-time">Schedule Time:</label>
-                <input type="datetime-local" id="schedule-time" required>
-                <button type="submit" class="btn">Add to Schedule</button>
-            </form>
-        </section>
-        <section id="analytics" class="section">
-            <h2>Analytics</h2>
-            <p>Total Plays: <span id="total-plays">0</span></p>
-            <p>Unique Listeners: <span id="unique-listeners">0</span></p>
-            <p>Most Played Track: <span id="most-played-track">None</span></p>
-        </section>
-        <section id="music-player" class="section">
-            <h2>Music Player</h2>
-            <audio id="audio-player" controls>
-                <source id="audio-source" src="" type="audio/mpeg">
-                Your browser does not support the audio tag.
-            </audio>
-            <div class="embed-code">
-                <h3>Embed this player:</h3>
-                <textarea id="embed-code" readonly rows="3" cols="50">&lt;audio controls&gt; &lt;source src=&quot;&lt;YOUR_AUDIO_FILE_LINK&gt;&quot; type=&quot;audio/mpeg&quot;&gt; Your browser does not support the audio tag. &lt;/audio&gt;</textarea>
-            </div>
-        </section>
-        <section id="stream-settings" class="section">
-            <h2>Media Stream Settings</h2>
-            <form id="stream-form" aria-labelledby="stream-settings">
-                <label for="protocol">Streaming Protocol:</label>
-                <select id="protocol" name="protocol" required>
-                    <option value="" disabled selected>Select protocol</option>
-                    <option value="icecast">Icecast</option>
-                    <option value="shoutcast">SHOUTcast</option>
-                </select>
-                <div id="common-settings">
-                    <label for="server-address">Server Address:</label>
-                    <input type="text" id="server-address" name="server-address" required>
-                    <label for="port">Port:</label>
-                    <input type="number" id="port" name="port" required>
-                    <label for="username">Username (if applicable):</label>
-                    <input type="text" id="username" name="username">
-                </div>
-                <div id="icecast-settings" class="protocol-specific">
-                    <label for="mount-point">Mount Point:</label>
-                    <input type="text" id="mount-point" name="mount-point" placeholder="/stream" required>
-                </div>
-                <div id="shoutcast-settings" class="protocol-specific" style="display: none;">
-                    <label for="stream-id">Stream ID:</label>
-                    <input type="text" id="stream-id" name="stream-id">
-                </div>
-                <label for="password">Password:</label>
-                <input type="password" id="password" name="password" required>
-                <button type="submit" class="btn">Save Settings</button>
-            </form>
-        </section>
+      <!-- Add Song Section -->
+      <section id="add-song-section">
+        <h2>Add Song</h2>
+        <input type="text" id="songLink" placeholder="Paste Google Drive link here">
+        <button id="addLink">Add to Playlist</button>
+      </section>
+
+      <!-- Scheduler Section -->
+      <section id="scheduler-section">
+        <h2>Schedule Playlist</h2>
+        <ul id="playlist"></ul>
+        <label for="scheduleTime">Set Start Time:</label>
+        <input type="time" id="scheduleTime">
+        <button id="startScheduler">Start Scheduler</button>
+      </section>
+
+      <!-- Icecast Settings -->
+      <section id="icecast-section">
+        <h2>Icecast Stream Settings</h2>
+        <label for="serverUrl">Server URL:</label>
+        <input type="text" id="serverUrl" placeholder="http://your-server.com:8000">
+        <label for="mountPoint">Mount Point:</label>
+        <input type="text" id="mountPoint" placeholder="/stream">
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Icecast password">
+        <button id="startStream">Start Stream</button>
+        <p id="streamStatus"></p>
+      </section>
+
+      <!-- Player Section -->
+      <section id="player-section">
+        <h2>Now Playing</h2>
+        <audio id="audioPlayer" controls></audio>
+        <p id="nowPlaying">No song is playing currently.</p>
+      </section>
     </main>
-    <footer>
-        <p>&copy; 2024 Radio Management</p>
-    </footer>
-    <script src="js/script.js"></script>
-
-    <div style="color: red; font-size: 12px; width: 600px; margin: 0 auto; text-align: center;">
-        Created with <a href="https://wordtohtml.net/">WordToHTML.net</a> trial.
-    </div>
-
-    <script>
-        // Add event listener for the link form submission
-        document.getElementById('link-form').addEventListener('submit', function (event) {
-            event.preventDefault(); // Prevent the default form submission
-
-            // Get the Google Drive link
-            const googleDriveLink = document.getElementById('google-drive-link').value;
-            const audioPlayer = document.getElementById('audio-player');
-            const audioSource = document.getElementById('audio-source');
-            const embedCode = document.getElementById('embed-code');
-
-            // Validate and set the audio source
-            if (googleDriveLink) {
-                audioSource.src = googleDriveLink; // Update audio source
-                audioPlayer.load(); // Load the new audio source
-
-                // Update embed code
-                embedCode.value = `&lt;audio controls&gt; &lt;source src=&quot;${googleDriveLink}&quot; type=&quot;audio/mpeg&quot;&gt; Your browser does not support the audio tag. &lt;/audio&gt;`;
-
-                // Show message for successful link addition
-                document.getElementById('link-message').innerText = "Link added successfully!";
-                document.getElementById('google-drive-link').value = ""; // Clear the input
-            } else {
-                // Show error message if the link is invalid
-                document.getElementById('link-message').innerText = "Please enter a valid Google Drive link.";
-            }
-        });
-    </script>
+  </div>
+  <script src="script.js"></script>
 </body>
-
-</html>
+    </html>
