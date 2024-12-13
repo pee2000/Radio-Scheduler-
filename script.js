@@ -1,98 +1,115 @@
-/* General Styles */
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #f9f9f9;
-  color: #333;
-}
 
-.container {
-  max-width: 700px;
-  margin: 20px auto;
-  background: #fff;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
+document.addEventListener('DOMContentLoaded', () => {
+  const songLinkInput = document.getElementById('songLink');
+  const addLinkButton = document.getElementById('addLink');
+  const playlist = document.getElementById('playlist');
+  const scheduleTimeInput = document.getElementById('scheduleTime');
+  const startSchedulerButton = document.getElementById('startScheduler');
+  const audioPlayer = document.getElementById('audioPlayer');
+  const nowPlaying = document.getElementById('nowPlaying');
+  const serverUrlInput = document.getElementById('serverUrl');
+  const mountPointInput = document.getElementById('mountPoint');
+  const passwordInput = document.getElementById('password');
+  const startStreamButton = document.getElementById('startStream');
+  const streamStatus = document.getElementById('streamStatus');
 
-header {
-  text-align: center;
-  margin-bottom: 20px;
-}
+  let playlistItems = [];
+  let schedulerInterval;
 
-header h1 {
-  margin: 0;
-  font-size: 24px;
-  color: #007bff;
-}
+  // Add Song from Google Drive
+  addLinkButton.addEventListener('click', () => {
+    const inputLink = songLinkInput.value.trim();
 
-header p {
-  color: #666;
-}
+    if (!inputLink) {
+      alert('Please enter a valid Google Drive link!');
+      return;
+    }
 
-main {
-  margin-top: 20px;
-}
+    const fileIdMatch = inputLink.match(/file\/d\/(.+?)\/view/);
+    if (!fileIdMatch) {
+      alert('Invalid Google Drive link format!');
+      return;
+    }
 
-section {
-  margin-bottom: 20px;
-}
+    const fileId = fileIdMatch[1];
+    const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
 
-h2 {
-  color: #007bff;
-  margin-bottom: 10px;
-}
+    playlistItems.push(directLink);
 
-input[type="text"],
-input[type="time"],
-input[type="password"] {
-  width: calc(100% - 20px);
-  padding: 10px;
-  margin-bottom: 10px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-}
+    const listItem = document.createElement('li');
+    listItem.textContent = `Song (${fileId})`;
 
-button {
-  padding: 10px 20px;
-  background-color: #007bff;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+    const playButton = document.createElement('button');
+    playButton.textContent = 'Play';
+    playButton.addEventListener('click', () => {
+      audioPlayer.src = directLink;
+      audioPlayer.play();
+      nowPlaying.textContent = `Now Playing: ${directLink}`;
+    });
 
-button:hover {
-  background-color: #0056b3;
-}
+    listItem.appendChild(playButton);
+    playlist.appendChild(listItem);
 
-ul {
-  list-style: none;
-  padding: 0;
-}
+    songLinkInput.value = '';
+  });
 
-li {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 10px;
-  background: #f4f4f4;
-  margin-bottom: 5px;
-  border-radius: 4px;
-  border: 1px solid #ddd;
-}
+  // Scheduler functionality
+  startSchedulerButton.addEventListener('click', () => {
+    const scheduleTime = scheduleTimeInput.value;
+    if (!scheduleTime || playlistItems.length === 0) {
+      alert('Please set a valid time and ensure the playlist is not empty.');
+      return;
+    }
 
-li button {
-  background-color: #28a745;
-  padding: 5px 10px;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-}
+    const now = new Date();
+    const scheduleDateTime = new Date(
+      `${now.toDateString()} ${scheduleTime}:00`
+    );
 
-li button:hover {
-  background-color: #218838;
-}
-    
+    const timeUntilStart = scheduleDateTime - now;
+
+    if (timeUntilStart < 0) {
+      alert('The scheduled time has already passed.');
+      return;
+    }
+
+    clearTimeout(schedulerInterval);
+    schedulerInterval = setTimeout(() => {
+      let currentSongIndex = 0;
+
+      const playNextSong = () => {
+        if (currentSongIndex < playlistItems.length) {
+          const nextSong = playlistItems[currentSongIndex];
+          audioPlayer.src = nextSong;
+          audioPlayer.play();
+          nowPlaying.textContent = `Now Playing: Song ${currentSongIndex + 1}`;
+          currentSongIndex++;
+        } else {
+          clearTimeout(schedulerInterval);
+        }
+      };
+
+      playNextSong();
+      audioPlayer.addEventListener('ended', playNextSong);
+    }, timeUntilStart);
+
+    alert('Scheduler set!');
+  });
+
+  // Icecast Stream Settings
+  startStreamButton.addEventListener('click', () => {
+    const serverUrl = serverUrlInput.value;
+    const mountPoint = mountPointInput.value;
+    const password = passwordInput.value;
+
+    if (!serverUrl || !mountPoint || !password) {
+      alert('Please fill in all Icecast stream settings.');
+      return;
+    }
+
+    // Normally, here you would configure the Icecast stream using backend code or an external library.
+    streamStatus.textContent = `Streaming to ${serverUrl}${mountPoint}...`;
+    alert('Icecast stream started!');
+  });
+});
+                         
