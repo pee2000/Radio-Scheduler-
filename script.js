@@ -1,115 +1,66 @@
+// Get saved playlist from localStorage
+let playlistItems = JSON.parse(localStorage.getItem('playlistItems')) || [];
 
-document.addEventListener('DOMContentLoaded', () => {
-  const songLinkInput = document.getElementById('songLink');
-  const addLinkButton = document.getElementById('addLink');
-  const playlist = document.getElementById('playlist');
-  const scheduleTimeInput = document.getElementById('scheduleTime');
-  const startSchedulerButton = document.getElementById('startScheduler');
-  const audioPlayer = document.getElementById('audioPlayer');
-  const nowPlaying = document.getElementById('nowPlaying');
-  const serverUrlInput = document.getElementById('serverUrl');
-  const mountPointInput = document.getElementById('mountPoint');
-  const passwordInput = document.getElementById('password');
-  const startStreamButton = document.getElementById('startStream');
-  const streamStatus = document.getElementById('streamStatus');
+// Elements
+const songLinkInput = document.getElementById('songLinkInput');
+const addLinkButton = document.getElementById('addLinkButton');
+const playlist = document.getElementById('playlist');
+const audioPlayer = document.getElementById('audioPlayer');
+const nowPlaying = document.getElementById('nowPlaying');
 
-  let playlistItems = [];
-  let schedulerInterval;
+// Function to update localStorage
+function savePlaylist() {
+  localStorage.setItem('playlistItems', JSON.stringify(playlistItems));
+}
 
-  // Add Song from Google Drive
-  addLinkButton.addEventListener('click', () => {
-    const inputLink = songLinkInput.value.trim();
+// Function to render the playlist
+function renderPlaylist() {
+  playlist.innerHTML = ''; // Clear the playlist UI
 
-    if (!inputLink) {
-      alert('Please enter a valid Google Drive link!');
-      return;
-    }
-
-    const fileIdMatch = inputLink.match(/file\/d\/(.+?)\/view/);
-    if (!fileIdMatch) {
-      alert('Invalid Google Drive link format!');
-      return;
-    }
-
-    const fileId = fileIdMatch[1];
-    const directLink = `https://drive.google.com/uc?export=download&id=${fileId}`;
-
-    playlistItems.push(directLink);
-
+  playlistItems.forEach((link, index) => {
     const listItem = document.createElement('li');
-    listItem.textContent = `Song (${fileId})`;
+    listItem.textContent = `Song ${index + 1}`;
 
+    // Play Button
     const playButton = document.createElement('button');
     playButton.textContent = 'Play';
     playButton.addEventListener('click', () => {
-      audioPlayer.src = directLink;
+      audioPlayer.src = link;
       audioPlayer.play();
-      nowPlaying.textContent = `Now Playing: ${directLink}`;
+      nowPlaying.textContent = `Now Playing: ${link}`;
+    });
+
+    // Delete Button
+    const deleteButton = document.createElement('button');
+    deleteButton.textContent = 'Delete';
+    deleteButton.addEventListener('click', () => {
+      playlistItems.splice(index, 1); // Remove from playlist array
+      savePlaylist(); // Save changes to localStorage
+      renderPlaylist(); // Re-render the playlist
     });
 
     listItem.appendChild(playButton);
+    listItem.appendChild(deleteButton);
     playlist.appendChild(listItem);
-
-    songLinkInput.value = '';
   });
+}
 
-  // Scheduler functionality
-  startSchedulerButton.addEventListener('click', () => {
-    const scheduleTime = scheduleTimeInput.value;
-    if (!scheduleTime || playlistItems.length === 0) {
-      alert('Please set a valid time and ensure the playlist is not empty.');
-      return;
-    }
+// Add URL to playlist
+addLinkButton.addEventListener('click', () => {
+  const inputLink = songLinkInput.value.trim();
 
-    const now = new Date();
-    const scheduleDateTime = new Date(
-      `${now.toDateString()} ${scheduleTime}:00`
-    );
+  if (!inputLink) {
+    alert('Please enter a valid MP3 URL!');
+    return;
+  }
 
-    const timeUntilStart = scheduleDateTime - now;
+  // Add link to playlist array
+  playlistItems.push(inputLink);
+  savePlaylist(); // Save to localStorage
+  renderPlaylist(); // Re-render playlist UI
 
-    if (timeUntilStart < 0) {
-      alert('The scheduled time has already passed.');
-      return;
-    }
-
-    clearTimeout(schedulerInterval);
-    schedulerInterval = setTimeout(() => {
-      let currentSongIndex = 0;
-
-      const playNextSong = () => {
-        if (currentSongIndex < playlistItems.length) {
-          const nextSong = playlistItems[currentSongIndex];
-          audioPlayer.src = nextSong;
-          audioPlayer.play();
-          nowPlaying.textContent = `Now Playing: Song ${currentSongIndex + 1}`;
-          currentSongIndex++;
-        } else {
-          clearTimeout(schedulerInterval);
-        }
-      };
-
-      playNextSong();
-      audioPlayer.addEventListener('ended', playNextSong);
-    }, timeUntilStart);
-
-    alert('Scheduler set!');
-  });
-
-  // Icecast Stream Settings
-  startStreamButton.addEventListener('click', () => {
-    const serverUrl = serverUrlInput.value;
-    const mountPoint = mountPointInput.value;
-    const password = passwordInput.value;
-
-    if (!serverUrl || !mountPoint || !password) {
-      alert('Please fill in all Icecast stream settings.');
-      return;
-    }
-
-    // Normally, here you would configure the Icecast stream using backend code or an external library.
-    streamStatus.textContent = `Streaming to ${serverUrl}${mountPoint}...`;
-    alert('Icecast stream started!');
-  });
+  songLinkInput.value = ''; // Clear the input field
 });
-                         
+
+// Initial rendering of playlist
+renderPlaylist();
