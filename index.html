@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>MP3 Player with Scheduler & Icecast</title>
   <style>
-    /* General Styling */
     body {
       font-family: Arial, sans-serif;
       background: linear-gradient(to right, #4facfe, #00f2fe); /* Blue Gradient */
@@ -60,6 +59,10 @@
     .section {
       margin: 20px 0;
     }
+
+    .playlist-button {
+      margin-left: 10px;
+    }
   </style>
 </head>
 <body>
@@ -79,6 +82,23 @@
   <div class="section">
     <h2>Add a Song to Playlist</h2>
     <input type="text" id="songLinkInput" placeholder="Enter MP3 URL">
+    <button id="addLinkButton">Add to Playlist</button>
+  </div>
+
+  <!-- Playlist Section -->
+  <div class="section">
+    <h2>Playlist</h2>
+    <ul id="playlist"></ul>
+    <h3 id="nowPlaying">Now Playing: None</h3>
+    <audio id="audioPlayer" controls></audio>
+  </div>
+
+  <!-- Scheduler Section -->
+  <div class="section">
+    <h2>Schedule a Song</h2>
+    <select id="songSelector">
+      <option value="">Select a Song</option>
+    </select>
     <select id="daySelector">
       <option value="">Select Day</option>
       <option value="Sunday">Sunday</option>
@@ -90,15 +110,7 @@
       <option value="Saturday">Saturday</option>
     </select>
     <input type="time" id="timeSelector">
-    <button id="addLinkButton">Add to Playlist</button>
-  </div>
-
-  <!-- Playlist Section -->
-  <div class="section">
-    <h2>Playlist</h2>
-    <ul id="playlist"></ul>
-    <h3 id="nowPlaying">Now Playing: None</h3>
-    <audio id="audioPlayer" controls></audio>
+    <button id="scheduleButton">Schedule Song</button>
   </div>
 
   <script>
@@ -121,27 +133,37 @@
 
     // Playlist and Scheduler
     let playlistItems = JSON.parse(localStorage.getItem('playlistItems')) || [];
+    let scheduleItems = JSON.parse(localStorage.getItem('scheduleItems')) || [];
 
     const songLinkInput = document.getElementById('songLinkInput');
     const addLinkButton = document.getElementById('addLinkButton');
+    const songSelector = document.getElementById('songSelector');
     const daySelector = document.getElementById('daySelector');
     const timeSelector = document.getElementById('timeSelector');
     const playlist = document.getElementById('playlist');
     const audioPlayer = document.getElementById('audioPlayer');
     const nowPlaying = document.getElementById('nowPlaying');
+    const scheduleButton = document.getElementById('scheduleButton');
 
     function savePlaylist() {
       localStorage.setItem('playlistItems', JSON.stringify(playlistItems));
     }
 
+    function saveSchedule() {
+      localStorage.setItem('scheduleItems', JSON.stringify(scheduleItems));
+    }
+
     function renderPlaylist() {
       playlist.innerHTML = '';
+      songSelector.innerHTML = '<option value="">Select a Song</option>';
+
       playlistItems.forEach((item, index) => {
         const listItem = document.createElement('li');
-        listItem.textContent = `Song ${index + 1}: ${item.day} at ${item.time}`;
+        listItem.textContent = `Song ${index + 1}: ${item.link}`;
 
         const playButton = document.createElement('button');
         playButton.textContent = 'Play';
+        playButton.classList.add('playlist-button');
         playButton.addEventListener('click', () => {
           audioPlayer.src = item.link;
           audioPlayer.play();
@@ -150,6 +172,7 @@
 
         const deleteButton = document.createElement('button');
         deleteButton.textContent = 'Delete';
+        deleteButton.classList.add('playlist-button');
         deleteButton.addEventListener('click', () => {
           playlistItems.splice(index, 1);
           savePlaylist();
@@ -159,26 +182,43 @@
         listItem.appendChild(playButton);
         listItem.appendChild(deleteButton);
         playlist.appendChild(listItem);
+
+        // Add to song selector for scheduling
+        const option = document.createElement('option');
+        option.value = item.link;
+        option.textContent = `Song ${index + 1}`;
+        songSelector.appendChild(option);
       });
     }
 
     addLinkButton.addEventListener('click', () => {
       const link = songLinkInput.value.trim();
-      const day = daySelector.value;
-      const time = timeSelector.value;
 
-      if (!link || !day || !time) {
-        alert('Please provide all song details!');
+      if (!link) {
+        alert('Please provide a song link!');
         return;
       }
 
-      playlistItems.push({ link, day, time });
+      playlistItems.push({ link });
       savePlaylist();
       renderPlaylist();
 
       songLinkInput.value = '';
-      daySelector.value = '';
-      timeSelector.value = '';
+    });
+
+    scheduleButton.addEventListener('click', () => {
+      const selectedSong = songSelector.value;
+      const selectedDay = daySelector.value;
+      const selectedTime = timeSelector.value;
+
+      if (!selectedSong || !selectedDay || !selectedTime) {
+        alert('Please select a song, day, and time!');
+        return;
+      }
+
+      scheduleItems.push({ link: selectedSong, day: selectedDay, time: selectedTime });
+      saveSchedule();
+      alert(`Scheduled song for ${selectedDay} at ${selectedTime}`);
     });
 
     function checkScheduler() {
@@ -186,7 +226,7 @@
       const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
       const currentTime = now.toTimeString().slice(0, 5);
 
-      playlistItems.forEach(item => {
+      scheduleItems.forEach(item => {
         if (item.day === currentDay && item.time === currentTime) {
           audioPlayer.src = item.link;
           audioPlayer.play();
