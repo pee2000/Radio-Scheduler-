@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MP3 Player</title>
+  <title>MP3 Player with Scheduler & Icecast</title>
   <style>
     /* General Styling */
     body {
@@ -19,12 +19,12 @@
       margin: 20px 0;
     }
 
-    input {
+    input, select {
       padding: 10px;
+      margin: 10px;
       width: 300px;
       border-radius: 5px;
       border: 1px solid #ccc;
-      margin-bottom: 20px;
     }
 
     button {
@@ -56,57 +56,104 @@
       width: 100%;
       max-width: 400px;
     }
+
+    .section {
+      margin: 20px 0;
+    }
   </style>
 </head>
 <body>
-  <h1>MP3 Player</h1>
-  <input type="text" id="songLinkInput" placeholder="Enter MP3 URL">
-  <button id="addLinkButton">Add to Playlist</button>
-  <h2>Playlist</h2>
-  <ul id="playlist"></ul>
-  <h3 id="nowPlaying">Now Playing: None</h3>
-  <audio id="audioPlayer" controls></audio>
+  <h1>MP3 Player with Scheduler & Icecast</h1>
+
+  <!-- Icecast Settings Section -->
+  <div class="section">
+    <h2>Icecast Stream Settings</h2>
+    <input type="text" id="streamUrl" placeholder="Stream URL">
+    <input type="text" id="mountPoint" placeholder="Mount Point">
+    <input type="password" id="streamPassword" placeholder="Password">
+    <button id="connectStream">Connect</button>
+    <h3 id="streamStatus">Not Connected</h3>
+  </div>
+
+  <!-- Add Song Section -->
+  <div class="section">
+    <h2>Add a Song to Playlist</h2>
+    <input type="text" id="songLinkInput" placeholder="Enter MP3 URL">
+    <select id="daySelector">
+      <option value="">Select Day</option>
+      <option value="Sunday">Sunday</option>
+      <option value="Monday">Monday</option>
+      <option value="Tuesday">Tuesday</option>
+      <option value="Wednesday">Wednesday</option>
+      <option value="Thursday">Thursday</option>
+      <option value="Friday">Friday</option>
+      <option value="Saturday">Saturday</option>
+    </select>
+    <input type="time" id="timeSelector">
+    <button id="addLinkButton">Add to Playlist</button>
+  </div>
+
+  <!-- Playlist Section -->
+  <div class="section">
+    <h2>Playlist</h2>
+    <ul id="playlist"></ul>
+    <h3 id="nowPlaying">Now Playing: None</h3>
+    <audio id="audioPlayer" controls></audio>
+  </div>
 
   <script>
-    // Get saved playlist from localStorage
+    // Icecast Settings
+    const streamUrl = document.getElementById('streamUrl');
+    const mountPoint = document.getElementById('mountPoint');
+    const streamPassword = document.getElementById('streamPassword');
+    const connectStream = document.getElementById('connectStream');
+    const streamStatus = document.getElementById('streamStatus');
+
+    connectStream.addEventListener('click', () => {
+      if (streamUrl.value && mountPoint.value && streamPassword.value) {
+        streamStatus.textContent = 'Connected to Icecast Stream!';
+        streamStatus.style.color = 'lightgreen';
+      } else {
+        streamStatus.textContent = 'Please fill all Icecast settings!';
+        streamStatus.style.color = 'red';
+      }
+    });
+
+    // Playlist and Scheduler
     let playlistItems = JSON.parse(localStorage.getItem('playlistItems')) || [];
 
-    // Elements
     const songLinkInput = document.getElementById('songLinkInput');
     const addLinkButton = document.getElementById('addLinkButton');
+    const daySelector = document.getElementById('daySelector');
+    const timeSelector = document.getElementById('timeSelector');
     const playlist = document.getElementById('playlist');
     const audioPlayer = document.getElementById('audioPlayer');
     const nowPlaying = document.getElementById('nowPlaying');
 
-    // Function to update localStorage
     function savePlaylist() {
       localStorage.setItem('playlistItems', JSON.stringify(playlistItems));
     }
 
-    // Function to render the playlist
     function renderPlaylist() {
-      playlist.innerHTML = ''; // Clear the playlist UI
-
-      playlistItems.forEach((link, index) => {
+      playlist.innerHTML = '';
+      playlistItems.forEach((item, index) => {
         const listItem = document.createElement('li');
-        listItem.textContent = `Song ${index + 1}`;
+        listItem.textContent = `Song ${index + 1}: ${item.day} at ${item.time}`;
 
-        // Play Button
         const playButton = document.createElement('button');
         playButton.textContent = 'Play';
         playButton.addEventListener('click', () => {
-          audioPlayer.src = link;
+          audioPlayer.src = item.link;
           audioPlayer.play();
-          nowPlaying.textContent = `Now Playing: ${link}`;
+          nowPlaying.textContent = `Now Playing: ${item.link}`;
         });
 
-        // Delete Button
         const deleteButton = document.createElement('button');
         deleteButton.textContent = 'Delete';
         deleteButton.addEventListener('click', () => {
-          playlistItems.splice(index, 1); // Remove from playlist array
-          savePlaylist(); // Save changes to localStorage
-          renderPlaylist(); // Re-render the playlist
+          playlistItems.splice(index, 1);
+          savePlaylist();
+          renderPlaylist();
         });
 
         listItem.appendChild(playButton);
@@ -115,24 +162,40 @@
       });
     }
 
-    // Add URL to playlist
     addLinkButton.addEventListener('click', () => {
-      const inputLink = songLinkInput.value.trim();
+      const link = songLinkInput.value.trim();
+      const day = daySelector.value;
+      const time = timeSelector.value;
 
-      if (!inputLink) {
-        alert('Please enter a valid MP3 URL!');
+      if (!link || !day || !time) {
+        alert('Please provide all song details!');
         return;
       }
 
-      // Add link to playlist array
-      playlistItems.push(inputLink);
-      savePlaylist(); // Save to localStorage
-      renderPlaylist(); // Re-render playlist UI
+      playlistItems.push({ link, day, time });
+      savePlaylist();
+      renderPlaylist();
 
-      songLinkInput.value = ''; // Clear the input field
+      songLinkInput.value = '';
+      daySelector.value = '';
+      timeSelector.value = '';
     });
 
-    // Initial rendering of playlist
+    function checkScheduler() {
+      const now = new Date();
+      const currentDay = now.toLocaleDateString('en-US', { weekday: 'long' });
+      const currentTime = now.toTimeString().slice(0, 5);
+
+      playlistItems.forEach(item => {
+        if (item.day === currentDay && item.time === currentTime) {
+          audioPlayer.src = item.link;
+          audioPlayer.play();
+          nowPlaying.textContent = `Now Playing: ${item.link}`;
+        }
+      });
+    }
+
+    setInterval(checkScheduler, 60000); // Check every minute
     renderPlaylist();
   </script>
 </body>
