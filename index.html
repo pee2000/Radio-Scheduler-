@@ -3,54 +3,137 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Google Drive Music Player with Scheduler & Icecast</title>
-  <link rel="stylesheet" href="styles.css">
+  <title>MP3 Player</title>
+  <style>
+    /* General Styling */
+    body {
+      font-family: Arial, sans-serif;
+      background: linear-gradient(to right, #4facfe, #00f2fe); /* Blue Gradient */
+      color: white;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    h1, h2, h3 {
+      margin: 20px 0;
+    }
+
+    input {
+      padding: 10px;
+      width: 300px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+    }
+
+    button {
+      padding: 10px 15px;
+      background-color: white;
+      color: #007bff;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
+      margin: 5px;
+    }
+
+    button:hover {
+      background-color: #e0e0e0;
+    }
+
+    ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    li {
+      margin: 10px 0;
+    }
+
+    audio {
+      margin-top: 20px;
+      width: 100%;
+      max-width: 400px;
+    }
+  </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>Music Scheduler & Icecast Streamer</h1>
-      <p>Stream your Google Drive-hosted songs live with Icecast!</p>
-    </header>
+  <h1>MP3 Player</h1>
+  <input type="text" id="songLinkInput" placeholder="Enter MP3 URL">
+  <button id="addLinkButton">Add to Playlist</button>
+  <h2>Playlist</h2>
+  <ul id="playlist"></ul>
+  <h3 id="nowPlaying">Now Playing: None</h3>
+  <audio id="audioPlayer" controls></audio>
 
-    <main>
-      <!-- Add Song Section -->
-      <section id="add-song-section">
-        <h2>Add Song</h2>
-        <input type="text" id="songLink" placeholder="Paste Google Drive link here">
-        <button id="addLink">Add to Playlist</button>
-      </section>
+  <script>
+    // Get saved playlist from localStorage
+    let playlistItems = JSON.parse(localStorage.getItem('playlistItems')) || [];
 
-      <!-- Scheduler Section -->
-      <section id="scheduler-section">
-        <h2>Schedule Playlist</h2>
-        <ul id="playlist"></ul>
-        <label for="scheduleTime">Set Start Time:</label>
-        <input type="time" id="scheduleTime">
-        <button id="startScheduler">Start Scheduler</button>
-      </section>
+    // Elements
+    const songLinkInput = document.getElementById('songLinkInput');
+    const addLinkButton = document.getElementById('addLinkButton');
+    const playlist = document.getElementById('playlist');
+    const audioPlayer = document.getElementById('audioPlayer');
+    const nowPlaying = document.getElementById('nowPlaying');
 
-      <!-- Icecast Settings -->
-      <section id="icecast-section">
-        <h2>Icecast Stream Settings</h2>
-        <label for="serverUrl">Server URL:</label>
-        <input type="text" id="serverUrl" placeholder="http://your-server.com:8000">
-        <label for="mountPoint">Mount Point:</label>
-        <input type="text" id="mountPoint" placeholder="/stream">
-        <label for="password">Password:</label>
-        <input type="password" id="password" placeholder="Icecast password">
-        <button id="startStream">Start Stream</button>
-        <p id="streamStatus"></p>
-      </section>
+    // Function to update localStorage
+    function savePlaylist() {
+      localStorage.setItem('playlistItems', JSON.stringify(playlistItems));
+    }
 
-      <!-- Player Section -->
-      <section id="player-section">
-        <h2>Now Playing</h2>
-        <audio id="audioPlayer" controls></audio>
-        <p id="nowPlaying">No song is playing currently.</p>
-      </section>
-    </main>
-  </div>
-  <script src="script.js"></script>
+    // Function to render the playlist
+    function renderPlaylist() {
+      playlist.innerHTML = ''; // Clear the playlist UI
+
+      playlistItems.forEach((link, index) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `Song ${index + 1}`;
+
+        // Play Button
+        const playButton = document.createElement('button');
+        playButton.textContent = 'Play';
+        playButton.addEventListener('click', () => {
+          audioPlayer.src = link;
+          audioPlayer.play();
+          nowPlaying.textContent = `Now Playing: ${link}`;
+        });
+
+        // Delete Button
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', () => {
+          playlistItems.splice(index, 1); // Remove from playlist array
+          savePlaylist(); // Save changes to localStorage
+          renderPlaylist(); // Re-render the playlist
+        });
+
+        listItem.appendChild(playButton);
+        listItem.appendChild(deleteButton);
+        playlist.appendChild(listItem);
+      });
+    }
+
+    // Add URL to playlist
+    addLinkButton.addEventListener('click', () => {
+      const inputLink = songLinkInput.value.trim();
+
+      if (!inputLink) {
+        alert('Please enter a valid MP3 URL!');
+        return;
+      }
+
+      // Add link to playlist array
+      playlistItems.push(inputLink);
+      savePlaylist(); // Save to localStorage
+      renderPlaylist(); // Re-render playlist UI
+
+      songLinkInput.value = ''; // Clear the input field
+    });
+
+    // Initial rendering of playlist
+    renderPlaylist();
+  </script>
 </body>
-    </html>
+</html>
