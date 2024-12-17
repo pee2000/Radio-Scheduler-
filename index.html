@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Music App with Stream Settings</title>
+  <title>Music App with Stream Settings and Scheduler</title>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: linear-gradient(to right, #4facfe, #00f2fe); /* Blue Gradient */
+      background: linear-gradient(to right, #4facfe, #00f2fe);
       color: white;
       text-align: center;
       margin: 0;
@@ -18,7 +18,7 @@
       margin: 20px 0;
     }
 
-    input, select, textarea {
+    input, button, select {
       padding: 10px;
       margin: 10px;
       width: 90%;
@@ -28,14 +28,12 @@
     }
 
     button {
-      padding: 10px 15px;
       background-color: white;
       color: #007bff;
       border: none;
       border-radius: 5px;
       cursor: pointer;
       font-size: 14px;
-      margin: 5px;
     }
 
     button:hover {
@@ -60,37 +58,10 @@
     .section {
       margin: 20px 0;
     }
-
-    .playlist-button {
-      margin-left: 10px;
-    }
-
-    label {
-      display: block;
-      margin: 10px 0 5px;
-    }
   </style>
 </head>
 <body>
-  <h1>Music App with Stream Settings</h1>
-
-  <!-- Icecast Stream Settings -->
-  <div class="section">
-    <h2>Icecast Stream Settings</h2>
-    <label for="streamURL">Stream URL:</label>
-    <input type="text" id="streamURL" placeholder="Enter Icecast Stream URL">
-    <label for="mountPoint">Mount Point:</label>
-    <input type="text" id="mountPoint" placeholder="Enter Mount Point">
-    <label for="streamPassword">Password:</label>
-    <input type="password" id="streamPassword" placeholder="Enter Stream Password">
-    <label for="serverAddress">Server Address:</label>
-    <input type="text" id="serverAddress" placeholder="Enter Server Address">
-    <label for="port">Port:</label>
-    <input type="number" id="port" placeholder="Enter Port Number">
-    <label for="source">Source:</label>
-    <input type="text" id="source" placeholder="Enter Source">
-    <button id="saveStreamSettings">Save Stream Settings</button>
-  </div>
+  <h1>Music App with Playlist and Scheduler</h1>
 
   <!-- Playlist Section -->
   <div class="section">
@@ -107,27 +78,54 @@
     <button id="addLinkButton">Add to Playlist</button>
   </div>
 
+  <!-- Scheduler Section -->
+  <div class="section">
+    <h2>Scheduler</h2>
+    <h3>Select a song from the playlist to schedule:</h3>
+    <label for="scheduleDay">Select Day:</label>
+    <select id="scheduleDay">
+      <option value="Monday">Monday</option>
+      <option value="Tuesday">Tuesday</option>
+      <option value="Wednesday">Wednesday</option>
+      <option value="Thursday">Thursday</option>
+      <option value="Friday">Friday</option>
+      <option value="Saturday">Saturday</option>
+      <option value="Sunday">Sunday</option>
+    </select>
+
+    <label for="scheduleTime">Select Time:</label>
+    <input type="time" id="scheduleTime">
+
+    <button id="scheduleButton">Add to Schedule</button>
+    <ul id="scheduleList"></ul>
+  </div>
+
   <script>
     const playlistItems = JSON.parse(localStorage.getItem('playlistItems')) || [];
+    const schedules = JSON.parse(localStorage.getItem('schedules')) || [];
     const songLinkInput = document.getElementById('songLinkInput');
     const addLinkButton = document.getElementById('addLinkButton');
     const playlist = document.getElementById('playlist');
+    const scheduleDay = document.getElementById('scheduleDay');
+    const scheduleTime = document.getElementById('scheduleTime');
+    const scheduleButton = document.getElementById('scheduleButton');
+    const scheduleList = document.getElementById('scheduleList');
     const audioPlayer = document.getElementById('audioPlayer');
     const nowPlaying = document.getElementById('nowPlaying');
-    const streamURLInput = document.getElementById('streamURL');
-    const mountPointInput = document.getElementById('mountPoint');
-    const streamPasswordInput = document.getElementById('streamPassword');
-    const serverAddressInput = document.getElementById('serverAddress');
-    const portInput = document.getElementById('port');
-    const sourceInput = document.getElementById('source');
-    const saveStreamSettings = document.getElementById('saveStreamSettings');
 
     let currentSongIndex = 0;
 
+    // Save playlist to local storage
     function savePlaylist() {
       localStorage.setItem('playlistItems', JSON.stringify(playlistItems));
     }
 
+    // Save schedules to local storage
+    function saveSchedules() {
+      localStorage.setItem('schedules', JSON.stringify(schedules));
+    }
+
+    // Render playlist
     function renderPlaylist() {
       playlist.innerHTML = '';
 
@@ -137,12 +135,14 @@
 
         const playButton = document.createElement('button');
         playButton.textContent = 'Play';
-        playButton.classList.add('playlist-button');
         playButton.addEventListener('click', () => playSong(index));
+
+        const scheduleButton = document.createElement('button');
+        scheduleButton.textContent = 'Schedule';
+        scheduleButton.addEventListener('click', () => scheduleSong(index));
 
         const deleteButton = document.createElement('button');
         deleteButton.textContent = 'Delete';
-        deleteButton.classList.add('playlist-button');
         deleteButton.addEventListener('click', () => {
           playlistItems.splice(index, 1);
           savePlaylist();
@@ -150,11 +150,34 @@
         });
 
         listItem.appendChild(playButton);
+        listItem.appendChild(scheduleButton);
         listItem.appendChild(deleteButton);
         playlist.appendChild(listItem);
       });
     }
 
+    // Render schedules
+    function renderSchedules() {
+      scheduleList.innerHTML = '';
+
+      schedules.forEach((item, index) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `Day: ${item.day}, Time: ${item.time}, Song: ${item.link}`;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.addEventListener('click', () => {
+          schedules.splice(index, 1);
+          saveSchedules();
+          renderSchedules();
+        });
+
+        listItem.appendChild(deleteButton);
+        scheduleList.appendChild(listItem);
+      });
+    }
+
+    // Play a song
     function playSong(index) {
       if (index >= 0 && index < playlistItems.length) {
         currentSongIndex = index;
@@ -164,16 +187,29 @@
       }
     }
 
-    // Autoplay next song when the current song ends
-    audioPlayer.addEventListener('ended', () => {
-      currentSongIndex++;
-      if (currentSongIndex < playlistItems.length) {
-        playSong(currentSongIndex);
-      } else {
-        nowPlaying.textContent = 'Playlist Ended';
-      }
-    });
+    // Schedule a song
+    function scheduleSong(index) {
+      const day = scheduleDay.value;
+      const time = scheduleTime.value;
 
+      if (!day || !time) {
+        alert('Please select both day and time!');
+        return;
+      }
+
+      const selectedSong = playlistItems[index];
+      if (!selectedSong) {
+        alert('Invalid song selection!');
+        return;
+      }
+
+      schedules.push({ day, time, link: selectedSong.link });
+      saveSchedules();
+      renderSchedules();
+      alert(`Scheduled Song ${index + 1} for ${day} at ${time}`);
+    }
+
+    // Add a song to playlist
     addLinkButton.addEventListener('click', () => {
       const link = songLinkInput.value.trim();
       if (!link) {
@@ -186,25 +222,18 @@
       songLinkInput.value = '';
     });
 
-    saveStreamSettings.addEventListener('click', () => {
-      const streamURL = streamURLInput.value.trim();
-      const mountPoint = mountPointInput.value.trim();
-      const password = streamPasswordInput.value.trim();
-      const serverAddress = serverAddressInput.value.trim();
-      const port = portInput.value.trim();
-      const source = sourceInput.value.trim();
-
-      if (!streamURL || !mountPoint || !password || !serverAddress || !port || !source) {
-        alert('Please fill all fields!');
-        return;
+    // Autoplay the next song
+    audioPlayer.addEventListener('ended', () => {
+      currentSongIndex++;
+      if (currentSongIndex < playlistItems.length) {
+        playSong(currentSongIndex);
+      } else {
+        nowPlaying.textContent = 'Playlist Ended';
       }
-
-      alert(
-        `Stream Settings Saved:\nStream URL: ${streamURL}\nMount Point: ${mountPoint}\nPassword: ${password}\nServer Address: ${serverAddress}\nPort: ${port}\nSource: ${source}`
-      );
     });
 
     renderPlaylist();
+    renderSchedules();
   </script>
 </body>
 </html>
