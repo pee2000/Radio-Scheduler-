@@ -61,7 +61,7 @@
   </style>
 </head>
 <body>
-  <h1>Music App with Playlist and Scheduler</h1>
+  <h1>Music App with Playlist and Stream Settings</h1>
 
   <!-- Playlist Section -->
   <div class="section">
@@ -76,6 +76,15 @@
     <h2>Add a Song to Playlist</h2>
     <input type="text" id="songLinkInput" placeholder="Enter MP3 URL">
     <button id="addLinkButton">Add to Playlist</button>
+  </div>
+
+  <!-- Stream Settings Section -->
+  <div class="section">
+    <h2>Icecast Stream Settings</h2>
+    <input type="text" id="serverAddress" placeholder="Server Address (e.g., http://example.com)">
+    <input type="number" id="port" placeholder="Port (e.g., 8000)">
+    <input type="text" id="source" placeholder="Source (e.g., mountpoint)">
+    <button id="saveStreamSettings">Save Stream Settings</button>
   </div>
 
   <!-- Scheduler Section -->
@@ -101,8 +110,14 @@
   </div>
 
   <script>
-    const playlistItems = JSON.parse(localStorage.getItem('playlistItems')) || [];
+    const playlistItems = JSON.parse(localStorage.getItem('playlistItems')) || [
+      { link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" }, 
+      { link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3" },
+      { link: "https://www.soundhelix.com/examples/mp3/SoundHelix-Song-3.mp3" }
+    ];
     const schedules = JSON.parse(localStorage.getItem('schedules')) || [];
+    const streamSettings = JSON.parse(localStorage.getItem('streamSettings')) || {};
+    
     const songLinkInput = document.getElementById('songLinkInput');
     const addLinkButton = document.getElementById('addLinkButton');
     const playlist = document.getElementById('playlist');
@@ -112,6 +127,10 @@
     const scheduleList = document.getElementById('scheduleList');
     const audioPlayer = document.getElementById('audioPlayer');
     const nowPlaying = document.getElementById('nowPlaying');
+    const serverAddress = document.getElementById('serverAddress');
+    const port = document.getElementById('port');
+    const source = document.getElementById('source');
+    const saveStreamSettingsButton = document.getElementById('saveStreamSettings');
 
     let currentSongIndex = 0;
 
@@ -123,6 +142,15 @@
     // Save schedules to local storage
     function saveSchedules() {
       localStorage.setItem('schedules', JSON.stringify(schedules));
+    }
+
+    // Save stream settings to local storage
+    function saveStreamSettings() {
+      streamSettings.serverAddress = serverAddress.value;
+      streamSettings.port = port.value;
+      streamSettings.source = source.value;
+      localStorage.setItem('streamSettings', JSON.stringify(streamSettings));
+      alert('Stream settings saved!');
     }
 
     // Render playlist
@@ -222,6 +250,9 @@
       songLinkInput.value = '';
     });
 
+    // Save stream settings
+    saveStreamSettingsButton.addEventListener('click', saveStreamSettings);
+
     // Autoplay the next song
     audioPlayer.addEventListener('ended', () => {
       currentSongIndex++;
@@ -234,6 +265,7 @@
 
     renderPlaylist();
     renderSchedules();
+
   </script>
 </body>
 </html>
