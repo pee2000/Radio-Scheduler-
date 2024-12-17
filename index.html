@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MP3 Player with Autoplay Playlist</title>
+  <title>Music App with Full Features</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -18,10 +18,11 @@
       margin: 20px 0;
     }
 
-    input, select {
+    input, select, textarea {
       padding: 10px;
       margin: 10px;
-      width: 300px;
+      width: 90%;
+      max-width: 400px;
       border-radius: 5px;
       border: 1px solid #ccc;
     }
@@ -63,10 +64,50 @@
     .playlist-button {
       margin-left: 10px;
     }
+
+    label {
+      display: block;
+      margin: 10px 0 5px;
+    }
+
+    .scheduler-settings {
+      margin: 20px 0;
+    }
   </style>
 </head>
 <body>
-  <h1>MP3 Player with Autoplay Playlist</h1>
+  <h1>Music App with Full Features</h1>
+
+  <!-- Icecast Settings -->
+  <div class="section">
+    <h2>Icecast Stream Settings</h2>
+    <label for="streamURL">Stream URL:</label>
+    <input type="text" id="streamURL" placeholder="Enter Icecast Stream URL">
+    <label for="mountPoint">Mount Point:</label>
+    <input type="text" id="mountPoint" placeholder="Enter Mount Point">
+    <button id="saveStreamSettings">Save Stream Settings</button>
+  </div>
+
+  <!-- Scheduler -->
+  <div class="section">
+    <h2>Schedule a Song</h2>
+    <label for="scheduleDay">Day:</label>
+    <select id="scheduleDay">
+      <option value="Monday">Monday</option>
+      <option value="Tuesday">Tuesday</option>
+      <option value="Wednesday">Wednesday</option>
+      <option value="Thursday">Thursday</option>
+      <option value="Friday">Friday</option>
+      <option value="Saturday">Saturday</option>
+      <option value="Sunday">Sunday</option>
+    </select>
+    <label for="scheduleTime">Time (HH:MM):</label>
+    <input type="time" id="scheduleTime">
+    <label for="scheduleSong">Song URL:</label>
+    <input type="text" id="scheduleSong" placeholder="Enter Song URL">
+    <button id="addScheduleButton">Add to Schedule</button>
+    <ul id="scheduleList"></ul>
+  </div>
 
   <!-- Playlist Section -->
   <div class="section">
@@ -81,20 +122,36 @@
     <h2>Add a Song to Playlist</h2>
     <input type="text" id="songLinkInput" placeholder="Enter MP3 URL">
     <button id="addLinkButton">Add to Playlist</button>
+    <h2>Upload MP3</h2>
+    <input type="file" id="uploadMP3" accept="audio/mp3">
   </div>
 
   <script>
     const playlistItems = JSON.parse(localStorage.getItem('playlistItems')) || [];
+    const schedules = JSON.parse(localStorage.getItem('schedules')) || [];
     const songLinkInput = document.getElementById('songLinkInput');
     const addLinkButton = document.getElementById('addLinkButton');
     const playlist = document.getElementById('playlist');
     const audioPlayer = document.getElementById('audioPlayer');
     const nowPlaying = document.getElementById('nowPlaying');
+    const uploadMP3 = document.getElementById('uploadMP3');
+    const scheduleList = document.getElementById('scheduleList');
+    const addScheduleButton = document.getElementById('addScheduleButton');
+    const scheduleDay = document.getElementById('scheduleDay');
+    const scheduleTime = document.getElementById('scheduleTime');
+    const scheduleSong = document.getElementById('scheduleSong');
+    const streamURLInput = document.getElementById('streamURL');
+    const mountPointInput = document.getElementById('mountPoint');
+    const saveStreamSettings = document.getElementById('saveStreamSettings');
 
     let currentSongIndex = 0;
 
     function savePlaylist() {
       localStorage.setItem('playlistItems', JSON.stringify(playlistItems));
+    }
+
+    function saveSchedules() {
+      localStorage.setItem('schedules', JSON.stringify(schedules));
     }
 
     function renderPlaylist() {
@@ -121,6 +178,26 @@
         listItem.appendChild(playButton);
         listItem.appendChild(deleteButton);
         playlist.appendChild(listItem);
+      });
+    }
+
+    function renderSchedules() {
+      scheduleList.innerHTML = '';
+      schedules.forEach((schedule, index) => {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${schedule.day}, ${schedule.time}: ${schedule.song}`;
+
+        const deleteButton = document.createElement('button');
+        deleteButton.textContent = 'Delete';
+        deleteButton.classList.add('playlist-button');
+        deleteButton.addEventListener('click', () => {
+          schedules.splice(index, 1);
+          saveSchedules();
+          renderSchedules();
+        });
+
+        listItem.appendChild(deleteButton);
+        scheduleList.appendChild(listItem);
       });
     }
 
@@ -155,7 +232,42 @@
       songLinkInput.value = '';
     });
 
+    uploadMP3.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        const fileURL = URL.createObjectURL(file);
+        playlistItems.push({ link: fileURL });
+        savePlaylist();
+        renderPlaylist();
+      }
+    });
+
+    addScheduleButton.addEventListener('click', () => {
+      const day = scheduleDay.value;
+      const time = scheduleTime.value;
+      const song = scheduleSong.value.trim();
+      if (!song) {
+        alert('Please provide a song URL!');
+        return;
+      }
+      schedules.push({ day, time, song });
+      saveSchedules();
+      renderSchedules();
+      scheduleSong.value = '';
+    });
+
+    saveStreamSettings.addEventListener('click', () => {
+      const streamURL = streamURLInput.value.trim();
+      const mountPoint = mountPointInput.value.trim();
+      if (!streamURL || !mountPoint) {
+        alert('Please provide Stream URL and Mount Point!');
+        return;
+      }
+      alert(`Stream Settings Saved:\nStream URL: ${streamURL}\nMount Point: ${mountPoint}`);
+    });
+
     renderPlaylist();
+    renderSchedules();
   </script>
 </body>
 </html>
