@@ -84,6 +84,8 @@
     <input type="text" id="serverAddress" placeholder="Server Address (e.g., http://example.com)">
     <input type="number" id="port" placeholder="Port (e.g., 8000)">
     <input type="text" id="source" placeholder="Source (e.g., mountpoint)">
+    <input type="text" id="username" placeholder="Username">
+    <input type="password" id="mountPassword" placeholder="Mount Password">
     <button id="saveStreamSettings">Save Stream Settings</button>
   </div>
 
@@ -130,6 +132,8 @@
     const serverAddress = document.getElementById('serverAddress');
     const port = document.getElementById('port');
     const source = document.getElementById('source');
+    const username = document.getElementById('username');
+    const mountPassword = document.getElementById('mountPassword');
     const saveStreamSettingsButton = document.getElementById('saveStreamSettings');
 
     let currentSongIndex = 0;
@@ -149,6 +153,8 @@
       streamSettings.serverAddress = serverAddress.value;
       streamSettings.port = port.value;
       streamSettings.source = source.value;
+      streamSettings.username = username.value;
+      streamSettings.mountPassword = mountPassword.value;
       localStorage.setItem('streamSettings', JSON.stringify(streamSettings));
       alert('Stream settings saved!');
     }
